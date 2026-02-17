@@ -1,6 +1,6 @@
 using Microsoft.Xna.Framework;
 
-namespace RoguelikeDarling.Core.RigidBody2D
+namespace RoguelikeDarling.Core.Spatial
 {
     public sealed class Transform2DComponent
     {

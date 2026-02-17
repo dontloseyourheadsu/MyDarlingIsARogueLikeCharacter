@@ -6,7 +6,12 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using RoguelikeDarling.Core.Camera;
+using RoguelikeDarling.Core.Collision2D;
 using RoguelikeDarling.Core.Ecs;
+using RoguelikeDarling.Core.Input;
+using RoguelikeDarling.Core.Physics2D;
+using RoguelikeDarling.Core.Rendering2D;
+using RoguelikeDarling.Core.Spatial;
 using RoguelikeDarling.Core.Tilemap;
 
 namespace RoguelikeDarling.Core
@@ -84,7 +89,11 @@ namespace RoguelikeDarling.Core
             world = new World();
             world.AddSystem(new CameraInputSystem());
             world.AddSystem(new TileMapDebugInputSystem());
+            world.AddSystem(new PlayerMovementInputSystem());
+            world.AddSystem(new RigidBody2DMovementSystem());
+            world.AddSystem(new Collision2DSolverSystem());
             world.AddSystem(new IsometricTileMapRenderSystem(GraphicsDevice));
+            world.AddSystem(new SpriteRender2DSystem());
 
             BuildIsometricDemoScene();
 
@@ -130,6 +139,7 @@ namespace RoguelikeDarling.Core
                     string debugText =
                         "Isometric TileMap Demo\n" +
                         "Arrow Keys: Move Camera\n" +
+                        "W/A/S/D: Move Playable RigidBody\n" +
                         "Shift + Arrows: Faster Camera\n" +
                         "1..9: Select Layer by Z order\n" +
                         "I/J/K/L: Nudge Selected Layer Offset\n" +
@@ -137,6 +147,7 @@ namespace RoguelikeDarling.Core
                         "+/-: Change Selected Layer Draw Tile Size\n" +
                         "Shift + +/-: Change Selected Layer Tile Stride\n" +
                         "PageUp/PageDown: Change Selected Layer ZIndex\n" +
+                        "Player collides with map + static rigidbody\n" +
                         "Esc: Exit";
                     spriteBatch.DrawString(hudFont, debugText, new Vector2(16f, 16f), Color.White);
                     spriteBatch.End();
@@ -152,6 +163,11 @@ namespace RoguelikeDarling.Core
             {
                 return;
             }
+
+            const int worldCollisionLayer = 0;
+            const int actorCollisionLayer = 1;
+            uint collideWithWorld = 1u << worldCollisionLayer;
+            uint collideWithActors = 1u << actorCollisionLayer;
 
             Texture2D tinyBlocksTexture = Content.Load<Texture2D>("tinyBlocks");
 
@@ -183,12 +199,29 @@ namespace RoguelikeDarling.Core
                 YSortEnabled = true,
             };
 
+            var atlasCollisionLayer = new TileMapCollisionLayerComponent(atlasLayer.Width, atlasLayer.Height)
+            {
+                ShapeType = CollisionShapeType.Polygon,
+                PolygonPoints = new[]
+                {
+                    new Vector2(0.5f, 0f),
+                    new Vector2(1f, 0.5f),
+                    new Vector2(0.5f, 1f),
+                    new Vector2(0f, 0.5f),
+                },
+            };
+
             for (int y = 0; y < atlasLayer.Height; y++)
             {
                 for (int x = 0; x < atlasLayer.Width; x++)
                 {
                     int tile = ((x + y) % 3) + 1;
                     atlasLayer.SetTile(x, y, tile);
+
+                    bool border = x == 0 || y == 0 || x == atlasLayer.Width - 1 || y == atlasLayer.Height - 1;
+                    bool centerBarrier = y == (atlasLayer.Height / 2) && x >= 4 && x <= 11;
+                    bool diagonalBarrier = x == y && x >= 3 && x <= 8;
+                    atlasCollisionLayer.SetSolid(x, y, border || centerBarrier || diagonalBarrier);
                 }
             }
 
@@ -232,9 +265,42 @@ namespace RoguelikeDarling.Core
                 }
             }
 
-            world.CreateEntity().AddComponent(atlasLayer);
+            world.CreateEntity()
+                .AddComponent(atlasLayer)
+                .AddComponent(atlasCollisionLayer)
+                .AddComponent(new CollisionLayerComponent(worldCollisionLayer, collideWithActors));
             world.CreateEntity().AddComponent(mixedLayer);
             world.CreateEntity().AddComponent(proceduralLayer);
+
+            world.CreateEntity()
+                .AddComponent(new Transform2DComponent { Position = new Vector2(430f, 260f), Scale = Vector2.One })
+                .AddComponent(new PlayerControllerComponent { MoveSpeedPixelsPerSecond = 175f })
+                .AddComponent(new RigidBody2DComponent { IsStatic = false })
+                .AddComponent(Collider2DComponent.CreateRectangle(new Vector2(44f, 28f)))
+                .AddComponent(new CollisionLayerComponent(actorCollisionLayer, collideWithWorld | collideWithActors))
+                .AddComponent(new SpriteRender2DComponent
+                {
+                    Texture = tinyBlocksTexture,
+                    SourceRect = new Rectangle(72, 0, 18, 18),
+                    LocalScale = new Vector2(2.4f, 2.1f),
+                    LocalPosition = Vector2.Zero,
+                    ZIndex = 50,
+                });
+
+            world.CreateEntity()
+                .AddComponent(new Transform2DComponent { Position = new Vector2(550f, 320f), Scale = Vector2.One })
+                .AddComponent(new RigidBody2DComponent { IsStatic = true })
+                .AddComponent(Collider2DComponent.CreateOval(new Vector2(58f, 44f)))
+                .AddComponent(new CollisionLayerComponent(actorCollisionLayer, collideWithActors))
+                .AddComponent(new SpriteRender2DComponent
+                {
+                    Texture = tinyBlocksTexture,
+                    SourceRect = new Rectangle(90, 0, 18, 18),
+                    LocalScale = new Vector2(2.8f, 2.4f),
+                    LocalPosition = new Vector2(0f, -4f),
+                    ZIndex = 51,
+                    Tint = new Color(230, 210, 255),
+                });
         }
     }
 }

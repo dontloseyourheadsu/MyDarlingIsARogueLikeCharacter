@@ -1,9 +1,9 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace RoguelikeDarling.Core.RigidBody2D
+namespace RoguelikeDarling.Core.Rendering2D
 {
-    public sealed class RigidBody2DRenderComponent
+    public sealed class SpriteRender2DComponent
     {
         public Texture2D Texture { get; set; }
 

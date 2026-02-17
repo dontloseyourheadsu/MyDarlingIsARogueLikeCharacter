@@ -1,4 +1,4 @@
-namespace RoguelikeDarling.Core.RigidBody2D
+namespace RoguelikeDarling.Core.Input
 {
     public sealed class PlayerControllerComponent
     {

@@ -1,7 +1,8 @@
 using Microsoft.Xna.Framework;
 using RoguelikeDarling.Core.Ecs;
+using RoguelikeDarling.Core.Spatial;
 
-namespace RoguelikeDarling.Core.RigidBody2D
+namespace RoguelikeDarling.Core.Physics2D
 {
     public sealed class RigidBody2DMovementSystem : IGameSystem
     {

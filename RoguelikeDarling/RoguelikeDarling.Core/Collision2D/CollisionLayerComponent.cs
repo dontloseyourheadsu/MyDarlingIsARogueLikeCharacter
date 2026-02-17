@@ -1,4 +1,4 @@
-namespace RoguelikeDarling.Core.RigidBody2D
+namespace RoguelikeDarling.Core.Collision2D
 {
     public sealed class CollisionLayerComponent
     {

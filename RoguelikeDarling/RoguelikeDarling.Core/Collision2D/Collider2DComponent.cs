@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 
-namespace RoguelikeDarling.Core.RigidBody2D
+namespace RoguelikeDarling.Core.Collision2D
 {
-    public sealed class RigidBody2DColliderComponent
+    public sealed class Collider2DComponent
     {
-        private RigidBody2DColliderComponent(CollisionShapeType shapeType)
+        private Collider2DComponent(CollisionShapeType shapeType)
         {
             ShapeType = shapeType;
             LocalScale = Vector2.One;
@@ -24,23 +24,23 @@ namespace RoguelikeDarling.Core.RigidBody2D
 
         public IReadOnlyList<Vector2> PolygonPoints { get; set; }
 
-        public static RigidBody2DColliderComponent CreateRectangle(Vector2 size)
+        public static Collider2DComponent CreateRectangle(Vector2 size)
         {
-            var collider = new RigidBody2DColliderComponent(CollisionShapeType.Rectangle);
+            var collider = new Collider2DComponent(CollisionShapeType.Rectangle);
             collider.Size = size;
             return collider;
         }
 
-        public static RigidBody2DColliderComponent CreateOval(Vector2 size)
+        public static Collider2DComponent CreateOval(Vector2 size)
         {
-            var collider = new RigidBody2DColliderComponent(CollisionShapeType.Oval);
+            var collider = new Collider2DComponent(CollisionShapeType.Oval);
             collider.Size = size;
             return collider;
         }
 
-        public static RigidBody2DColliderComponent CreatePolygon(IReadOnlyList<Vector2> points)
+        public static Collider2DComponent CreatePolygon(IReadOnlyList<Vector2> points)
         {
-            var collider = new RigidBody2DColliderComponent(CollisionShapeType.Polygon);
+            var collider = new Collider2DComponent(CollisionShapeType.Polygon);
             collider.PolygonPoints = points ?? Array.Empty<Vector2>();
             return collider;
         }

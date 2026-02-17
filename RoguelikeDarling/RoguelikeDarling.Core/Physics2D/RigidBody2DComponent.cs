@@ -1,6 +1,6 @@
 using Microsoft.Xna.Framework;
 
-namespace RoguelikeDarling.Core.RigidBody2D
+namespace RoguelikeDarling.Core.Physics2D
 {
     public sealed class RigidBody2DComponent
     {

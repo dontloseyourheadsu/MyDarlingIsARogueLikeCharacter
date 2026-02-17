@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
-using RoguelikeDarling.Core.RigidBody2D;
+using RoguelikeDarling.Core.Collision2D;
 
 namespace RoguelikeDarling.Core.Tilemap
 {

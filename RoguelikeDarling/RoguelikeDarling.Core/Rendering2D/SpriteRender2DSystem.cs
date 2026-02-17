@@ -3,10 +3,11 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using RoguelikeDarling.Core.Camera;
 using RoguelikeDarling.Core.Ecs;
+using RoguelikeDarling.Core.Spatial;
 
-namespace RoguelikeDarling.Core.RigidBody2D
+namespace RoguelikeDarling.Core.Rendering2D
 {
-    public sealed class RigidBody2DRenderSystem : IGameSystem
+    public sealed class SpriteRender2DSystem : IGameSystem
     {
         public void Update(World world, GameTime gameTime)
         {
@@ -26,7 +27,7 @@ namespace RoguelikeDarling.Core.RigidBody2D
                 }
 
                 if (!entity.TryGetComponent<Transform2DComponent>(out Transform2DComponent transform)
-                    || !entity.TryGetComponent<RigidBody2DRenderComponent>(out RigidBody2DRenderComponent render)
+                    || !entity.TryGetComponent<SpriteRender2DComponent>(out SpriteRender2DComponent render)
                     || transform == null
                     || render == null
                     || render.Texture == null)

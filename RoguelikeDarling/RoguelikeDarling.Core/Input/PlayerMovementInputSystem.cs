@@ -1,10 +1,11 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using RoguelikeDarling.Core.Ecs;
+using RoguelikeDarling.Core.Physics2D;
 
-namespace RoguelikeDarling.Core.RigidBody2D
+namespace RoguelikeDarling.Core.Input
 {
-    public sealed class RigidBody2DPlayerInputSystem : IGameSystem
+    public sealed class PlayerMovementInputSystem : IGameSystem
     {
         public void Update(World world, GameTime gameTime)
         {

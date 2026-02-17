@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using RoguelikeDarling.Core.Ecs;
+using RoguelikeDarling.Core.Physics2D;
+using RoguelikeDarling.Core.Spatial;
 using RoguelikeDarling.Core.Tilemap;
 
-namespace RoguelikeDarling.Core.RigidBody2D
+namespace RoguelikeDarling.Core.Collision2D
 {
-    public sealed class RigidBody2DCollisionSystem : IGameSystem
+    public sealed class Collision2DSolverSystem : IGameSystem
     {
         public void Update(World world, GameTime gameTime)
         {
@@ -29,7 +31,7 @@ namespace RoguelikeDarling.Core.RigidBody2D
             {
                 Entity entity = world.Entities[i];
                 if (!entity.TryGetComponent<Transform2DComponent>(out Transform2DComponent transform)
-                    || !entity.TryGetComponent<RigidBody2DColliderComponent>(out RigidBody2DColliderComponent collider)
+                    || !entity.TryGetComponent<Collider2DComponent>(out Collider2DComponent collider)
                     || !entity.TryGetComponent<CollisionLayerComponent>(out CollisionLayerComponent collisionLayer)
                     || transform == null
                     || collider == null
@@ -168,7 +170,7 @@ namespace RoguelikeDarling.Core.RigidBody2D
             return hadCollision;
         }
 
-        private static Vector2[] BuildWorldPolygon(Transform2DComponent transform, RigidBody2DColliderComponent collider)
+        private static Vector2[] BuildWorldPolygon(Transform2DComponent transform, Collider2DComponent collider)
         {
             Vector2 parentScale = transform.Scale;
             Vector2 localScale = collider.LocalScale;
@@ -401,7 +403,7 @@ namespace RoguelikeDarling.Core.RigidBody2D
 
         private readonly struct RigidColliderEntry
         {
-            public RigidColliderEntry(Entity entity, Transform2DComponent transform, RigidBody2DComponent rigidBody, RigidBody2DColliderComponent collider, CollisionLayerComponent layer)
+            public RigidColliderEntry(Entity entity, Transform2DComponent transform, RigidBody2DComponent rigidBody, Collider2DComponent collider, CollisionLayerComponent layer)
             {
                 Entity = entity;
                 Transform = transform;
@@ -416,7 +418,7 @@ namespace RoguelikeDarling.Core.RigidBody2D
 
             public RigidBody2DComponent RigidBody { get; }
 
-            public RigidBody2DColliderComponent Collider { get; }
+            public Collider2DComponent Collider { get; }
 
             public CollisionLayerComponent Layer { get; }
         }
