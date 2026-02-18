@@ -118,6 +118,7 @@ namespace RoguelikeDarling.Core
                 || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
+            SyncCameraViewportCenters();
             world.Update(gameTime);
 
             base.Update(gameTime);
@@ -146,6 +147,8 @@ namespace RoguelikeDarling.Core
                         "Arrow Keys: Move Camera\n" +
                         "W/A/S/D: Move Playable RigidBody\n" +
                         "Shift + Arrows: Faster Camera\n" +
+                        "F: Attach Camera to Player RigidBody\n" +
+                        "G: Detach Camera from RigidBody\n" +
                         "1..9: Select Layer by Z order\n" +
                         "I/J/K/L: Nudge Selected Layer Offset\n" +
                         "Y: Toggle Y Sort (Selected Layer)\n" +
@@ -193,9 +196,10 @@ namespace RoguelikeDarling.Core
             paletteEntity.AddComponent(palette);
 
             var cameraEntity = world.CreateEntity();
+            var cameraController = new CameraControllerComponent { MoveSpeedPixelsPerSecond = 420f };
             cameraEntity
                 .AddComponent(new Camera2DComponent { Position = new Vector2(0f, 0f), Zoom = 1f })
-                .AddComponent(new CameraControllerComponent { MoveSpeedPixelsPerSecond = 420f });
+                .AddComponent(cameraController);
 
             var atlasLayer = new TileMapLayerComponent("AtlasGround", 16, 16, new Point(100, 60), zIndex: 0)
             {
@@ -278,7 +282,7 @@ namespace RoguelikeDarling.Core
             world.CreateEntity().AddComponent(mixedLayer);
             world.CreateEntity().AddComponent(proceduralLayer);
 
-            world.CreateEntity()
+            var playerEntity = world.CreateEntity()
                 .AddComponent(new Transform2DComponent { Position = new Vector2(430f, 260f), Scale = Vector2.One })
                 .AddComponent(new PlayerControllerComponent { MoveSpeedPixelsPerSecond = 175f })
                 .AddComponent(new RigidBody2DComponent { IsStatic = false })
@@ -307,6 +311,29 @@ namespace RoguelikeDarling.Core
                     ZIndex = 51,
                     Tint = new Color(230, 210, 255),
                 });
+
+            cameraController.AttachToRigidBody(playerEntity);
+        }
+
+        private void SyncCameraViewportCenters()
+        {
+            if (world == null)
+            {
+                return;
+            }
+
+            Vector2 viewportCenter = new Vector2(
+                GraphicsDevice.Viewport.Width * 0.5f,
+                GraphicsDevice.Viewport.Height * 0.5f);
+
+            for (int i = 0; i < world.Entities.Count; i++)
+            {
+                Entity entity = world.Entities[i];
+                if (entity.TryGetComponent<Camera2DComponent>(out Camera2DComponent camera) && camera != null)
+                {
+                    camera.ViewportCenter = viewportCenter;
+                }
+            }
         }
     }
 }
