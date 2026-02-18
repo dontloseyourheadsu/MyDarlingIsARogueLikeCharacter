@@ -27,6 +27,8 @@ namespace RoguelikeDarling.Core
         private SpriteBatch spriteBatch;
         private World world;
         private SpriteFont hudFont;
+        private readonly bool isCollisionDebugEnabled;
+        private readonly Color collisionDebugColor;
 
         /// <summary>
         /// Indicates if the game is running on a mobile platform.
@@ -43,9 +45,11 @@ namespace RoguelikeDarling.Core
         /// initializes services like settings and leaderboard managers, and sets up the 
         /// screen manager for screen transitions.
         /// </summary>
-        public RoguelikeDarlingGame()
+        public RoguelikeDarlingGame(bool isCollisionDebugEnabled = false, Color? collisionDebugColor = null)
         {
             graphicsDeviceManager = new GraphicsDeviceManager(this);
+            this.isCollisionDebugEnabled = isCollisionDebugEnabled;
+            this.collisionDebugColor = collisionDebugColor ?? new Color(220, 30, 30);
 
             // Share GraphicsDeviceManager as a service.
             Services.AddService(typeof(GraphicsDeviceManager), graphicsDeviceManager);
@@ -94,6 +98,7 @@ namespace RoguelikeDarling.Core
             world.AddSystem(new Collision2DSolverSystem());
             world.AddSystem(new IsometricTileMapRenderSystem(GraphicsDevice));
             world.AddSystem(new SpriteRender2DSystem());
+            world.AddSystem(new Collision2DDebugRenderSystem(GraphicsDevice, isCollisionDebugEnabled));
 
             BuildIsometricDemoScene();
 
@@ -148,6 +153,7 @@ namespace RoguelikeDarling.Core
                         "Shift + +/-: Change Selected Layer Tile Stride\n" +
                         "PageUp/PageDown: Change Selected Layer ZIndex\n" +
                         "Player collides with map + static rigidbody\n" +
+                        $"Collision debug: {(isCollisionDebugEnabled ? "ON" : "OFF")}\n" +
                         "Esc: Exit";
                     spriteBatch.DrawString(hudFont, debugText, new Vector2(16f, 16f), Color.White);
                     spriteBatch.End();
@@ -199,7 +205,7 @@ namespace RoguelikeDarling.Core
                 YSortEnabled = true,
             };
 
-            var atlasCollisionLayer = new TileMapCollisionLayerComponent(atlasLayer.Width, atlasLayer.Height)
+            var atlasCollisionLayer = new TileMapCollisionLayerComponent(atlasLayer.Width, atlasLayer.Height, isCollisionDebugEnabled, collisionDebugColor)
             {
                 ShapeType = CollisionShapeType.Polygon,
                 PolygonPoints = new[]
@@ -276,7 +282,7 @@ namespace RoguelikeDarling.Core
                 .AddComponent(new Transform2DComponent { Position = new Vector2(430f, 260f), Scale = Vector2.One })
                 .AddComponent(new PlayerControllerComponent { MoveSpeedPixelsPerSecond = 175f })
                 .AddComponent(new RigidBody2DComponent { IsStatic = false })
-                .AddComponent(Collider2DComponent.CreateRectangle(new Vector2(44f, 28f)))
+                .AddComponent(Collider2DComponent.CreateRectangle(new Vector2(44f, 28f), isCollisionDebugEnabled, collisionDebugColor))
                 .AddComponent(new CollisionLayerComponent(actorCollisionLayer, collideWithWorld | collideWithActors))
                 .AddComponent(new SpriteRender2DComponent
                 {
@@ -290,7 +296,7 @@ namespace RoguelikeDarling.Core
             world.CreateEntity()
                 .AddComponent(new Transform2DComponent { Position = new Vector2(550f, 320f), Scale = Vector2.One })
                 .AddComponent(new RigidBody2DComponent { IsStatic = true })
-                .AddComponent(Collider2DComponent.CreateOval(new Vector2(58f, 44f)))
+                .AddComponent(Collider2DComponent.CreateOval(new Vector2(58f, 44f), isCollisionDebugEnabled, collisionDebugColor))
                 .AddComponent(new CollisionLayerComponent(actorCollisionLayer, collideWithActors))
                 .AddComponent(new SpriteRender2DComponent
                 {
