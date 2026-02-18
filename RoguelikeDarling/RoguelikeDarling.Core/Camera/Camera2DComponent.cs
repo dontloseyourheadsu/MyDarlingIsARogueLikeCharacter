@@ -8,10 +8,13 @@ namespace RoguelikeDarling.Core.Camera
 
         public float Zoom { get; set; } = 1f;
 
+        public Vector2 ViewportCenter { get; set; }
+
         public Matrix GetViewMatrix()
         {
             return Matrix.CreateTranslation(new Vector3(-Position, 0f)) *
-                   Matrix.CreateScale(Zoom, Zoom, 1f);
+                   Matrix.CreateScale(Zoom, Zoom, 1f) *
+                   Matrix.CreateTranslation(new Vector3(ViewportCenter, 0f));
         }
     }
 }
