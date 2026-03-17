@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using RoguelikeDarling.Core.Camera;
 using RoguelikeDarling.Core.Ecs;
+using RoguelikeDarling.Core.GameSpecific.Menus.TileMap;
 
 namespace RoguelikeDarling.Core.Tilemap
 {
@@ -25,6 +26,7 @@ namespace RoguelikeDarling.Core.Tilemap
         {
             Camera2DComponent camera = null;
             TilePaletteComponent palette = null;
+            bool isMenuVisible = false;
             var layers = new List<TileMapLayerComponent>();
 
             for (int i = 0; i < world.Entities.Count; i++)
@@ -41,13 +43,21 @@ namespace RoguelikeDarling.Core.Tilemap
                     palette = paletteComponent;
                 }
 
+                if (!isMenuVisible
+                    && entity.TryGetComponent<TileMapMenuComponent>(out TileMapMenuComponent menu)
+                    && menu != null
+                    && menu.IsVisible)
+                {
+                    isMenuVisible = true;
+                }
+
                 if (entity.TryGetComponent<TileMapLayerComponent>(out TileMapLayerComponent layer) && layer != null)
                 {
                     layers.Add(layer);
                 }
             }
 
-            if (camera == null || palette == null)
+            if (camera == null || palette == null || isMenuVisible)
             {
                 return;
             }
