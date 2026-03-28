@@ -7,5 +7,7 @@ namespace RoguelikeDarling.Core.Spatial
         public Vector2 Position { get; set; }
 
         public Vector2 Scale { get; set; } = Vector2.One;
+
+        public float Rotation { get; set; }
     }
 }

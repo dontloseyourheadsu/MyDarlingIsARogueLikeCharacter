@@ -6,7 +6,11 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using RoguelikeDarling.Core.Camera;
+using RoguelikeDarling.Core.Collision2D;
 using RoguelikeDarling.Core.Ecs;
+using RoguelikeDarling.Core.Physics2D;
+using RoguelikeDarling.Core.Skeleton2D.Humanoid;
+using RoguelikeDarling.Core.Spatial;
 using RoguelikeDarling.Core.Storage;
 using RoguelikeDarling.Core.Tilemap;
 using RoguelikeDarling.Core.Editors.TileMapEditor;
@@ -94,7 +98,13 @@ namespace RoguelikeDarling.Core
             tileMapEditorStorage = new TileMapEditorStorage();
 
             world = new World();
+            world.AddSystem(new HumanoidSkeletonAnimationSystem());
+            world.AddSystem(new HumanoidSkeletonSyncSystem());
+            world.AddSystem(new RigidBody2DMovementSystem());
+            world.AddSystem(new Collision2DSolverSystem());
             world.AddSystem(new IsometricTileMapRenderSystem(GraphicsDevice));
+            world.AddSystem(new HumanoidSkeletonRenderSystem(GraphicsDevice));
+            world.AddSystem(new Collision2DDebugRenderSystem(GraphicsDevice, isCollisionDebugEnabled));
             world.AddSystem(new TileMapEditorSystem(tileMapEditorStorage, hudFont, GraphicsDevice));
             world.AddSystem(new TileMapMenuSystem(tileMapEditorStorage, hudFont, GraphicsDevice));
 
@@ -208,6 +218,59 @@ namespace RoguelikeDarling.Core
                 {
                     IsVisible = true,
                     NeedsRefresh = true,
+                });
+
+            BuildHumanoidSkeletonScene();
+        }
+
+        private void BuildHumanoidSkeletonScene()
+        {
+            if (world == null)
+            {
+                return;
+            }
+
+            const int worldCollisionLayer = 1;
+            const int humanoidCollisionLayer = 2;
+
+            world.CreateEntity()
+                .AddComponent(new Transform2DComponent
+                {
+                    Position = new Vector2(920f, 560f),
+                    Scale = Vector2.One,
+                })
+                .AddComponent(Collider2DComponent.CreateRectangle(new Vector2(640f, 36f), isCollisionDebugEnabled, collisionDebugColor))
+                .AddComponent(new RigidBody2DComponent { IsStatic = true })
+                .AddComponent(new CollisionLayerComponent(worldCollisionLayer, 1u << humanoidCollisionLayer));
+
+            world.CreateEntity()
+                .AddComponent(new Transform2DComponent
+                {
+                    Position = new Vector2(820f, 500f),
+                    Scale = Vector2.One,
+                })
+                .AddComponent(Collider2DComponent.CreateRectangle(new Vector2(96f, 20f), isCollisionDebugEnabled, collisionDebugColor))
+                .AddComponent(new RigidBody2DComponent { IsStatic = true })
+                .AddComponent(new CollisionLayerComponent(worldCollisionLayer, 1u << humanoidCollisionLayer));
+
+            var humanoid = new HumanoidSkeleton2D(HumanoidSkeletonSkin2D.CreateDefaultSolid());
+
+            world.CreateEntity()
+                .AddComponent(new Transform2DComponent
+                {
+                    Position = new Vector2(760f, 460f),
+                    Scale = new Vector2(1.25f, 1.25f),
+                })
+                .AddComponent(new HumanoidSkeletonComponent(humanoid)
+                {
+                    Animation = HumanoidSkeletonAnimationKind.Walk,
+                    MovementSpeed01 = 0.45f,
+                    SkeletonLocalOffset = new Vector2(0f, 0f),
+                    CollisionLocalOffset = new Vector2(0f, 0f),
+                    CollisionLayer = humanoidCollisionLayer,
+                    CollisionMask = 1u << worldCollisionLayer,
+                    CollisionDebugEnabled = isCollisionDebugEnabled,
+                    CollisionDebugColor = collisionDebugColor,
                 });
         }
 
