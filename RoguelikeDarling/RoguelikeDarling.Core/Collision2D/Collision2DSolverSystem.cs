@@ -175,6 +175,7 @@ namespace RoguelikeDarling.Core.Collision2D
             Vector2 parentScale = transform.Scale;
             Vector2 localScale = collider.LocalScale;
             Vector2 combinedScale = new Vector2(parentScale.X * localScale.X, parentScale.Y * localScale.Y);
+            float rotation = transform.Rotation;
 
             Vector2 worldCenter = transform.Position + new Vector2(
                 collider.LocalPosition.X * parentScale.X,
@@ -183,11 +184,11 @@ namespace RoguelikeDarling.Core.Collision2D
             switch (collider.ShapeType)
             {
                 case CollisionShapeType.Rectangle:
-                    return BuildRectanglePolygon(worldCenter, collider.Size, combinedScale);
+                    return BuildRectanglePolygon(worldCenter, collider.Size, combinedScale, rotation);
                 case CollisionShapeType.Oval:
-                    return BuildOvalPolygon(worldCenter, collider.Size, combinedScale, 14);
+                    return BuildOvalPolygon(worldCenter, collider.Size, combinedScale, 14, rotation);
                 case CollisionShapeType.Polygon:
-                    return BuildCustomPolygon(worldCenter, collider.PolygonPoints, combinedScale);
+                    return BuildCustomPolygon(worldCenter, collider.PolygonPoints, combinedScale, rotation);
                 default:
                     return Array.Empty<Vector2>();
             }
@@ -211,7 +212,7 @@ namespace RoguelikeDarling.Core.Collision2D
                         Vector2 center = new Vector2(
                             tileBaseX + (entry.TileLayer.TileStride.X * 0.5f),
                             tileBaseY + (entry.TileLayer.TileStride.Y * 0.5f));
-                        return BuildRectanglePolygon(center, size, Vector2.One);
+                        return BuildRectanglePolygon(center, size, Vector2.One, rotation: 0f);
                     }
                 case CollisionShapeType.Oval:
                     {
@@ -221,7 +222,7 @@ namespace RoguelikeDarling.Core.Collision2D
                         Vector2 center = new Vector2(
                             tileBaseX + (entry.TileLayer.TileStride.X * 0.5f),
                             tileBaseY + (entry.TileLayer.TileStride.Y * 0.5f));
-                        return BuildOvalPolygon(center, size, Vector2.One, 14);
+                        return BuildOvalPolygon(center, size, Vector2.One, 14, rotation: 0f);
                     }
                 case CollisionShapeType.Polygon:
                 default:
@@ -252,21 +253,24 @@ namespace RoguelikeDarling.Core.Collision2D
             }
         }
 
-        private static Vector2[] BuildRectanglePolygon(Vector2 center, Vector2 size, Vector2 scale)
+        private static Vector2[] BuildRectanglePolygon(Vector2 center, Vector2 size, Vector2 scale, float rotation)
         {
             float halfWidth = size.X * scale.X * 0.5f;
             float halfHeight = size.Y * scale.Y * 0.5f;
 
-            return new[]
+            Vector2[] points = new[]
             {
                 new Vector2(center.X - halfWidth, center.Y - halfHeight),
                 new Vector2(center.X + halfWidth, center.Y - halfHeight),
                 new Vector2(center.X + halfWidth, center.Y + halfHeight),
                 new Vector2(center.X - halfWidth, center.Y + halfHeight),
             };
+
+            RotatePointsAroundCenter(points, center, rotation);
+            return points;
         }
 
-        private static Vector2[] BuildCustomPolygon(Vector2 center, IReadOnlyList<Vector2> points, Vector2 scale)
+        private static Vector2[] BuildCustomPolygon(Vector2 center, IReadOnlyList<Vector2> points, Vector2 scale, float rotation)
         {
             if (points == null || points.Count < 3)
             {
@@ -280,10 +284,12 @@ namespace RoguelikeDarling.Core.Collision2D
                 result[i] = center + new Vector2(p.X * scale.X, p.Y * scale.Y);
             }
 
+            RotatePointsAroundCenter(result, center, rotation);
+
             return result;
         }
 
-        private static Vector2[] BuildOvalPolygon(Vector2 center, Vector2 size, Vector2 scale, int segments)
+        private static Vector2[] BuildOvalPolygon(Vector2 center, Vector2 size, Vector2 scale, int segments, float rotation)
         {
             float rx = size.X * scale.X * 0.5f;
             float ry = size.Y * scale.Y * 0.5f;
@@ -297,7 +303,28 @@ namespace RoguelikeDarling.Core.Collision2D
                     center.Y + (float)Math.Sin(t) * ry);
             }
 
+            RotatePointsAroundCenter(points, center, rotation);
+
             return points;
+        }
+
+        private static void RotatePointsAroundCenter(Vector2[] points, Vector2 center, float rotation)
+        {
+            if (points == null || points.Length == 0 || rotation == 0f)
+            {
+                return;
+            }
+
+            float cos = (float)Math.Cos(rotation);
+            float sin = (float)Math.Sin(rotation);
+
+            for (int i = 0; i < points.Length; i++)
+            {
+                Vector2 local = points[i] - center;
+                points[i] = center + new Vector2(
+                    (local.X * cos) - (local.Y * sin),
+                    (local.X * sin) + (local.Y * cos));
+            }
         }
 
         private static bool TryComputeMinimumTranslation(Vector2[] polygonA, Vector2[] polygonB, out Vector2 minimumTranslation)
